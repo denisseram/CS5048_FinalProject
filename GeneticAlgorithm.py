@@ -19,6 +19,10 @@ class GeneticAlgorithm():
         self._crossPoints = crossPoints
 
     def run(self, maxGenerations):
+        # Lists to store the historical best values per generation
+        bestSolutions = []
+        bestIndividuals = []
+
         # Create the initial population at random
         population = np.random.randint(0, 2, size=(self._popSize, self._indSize))
 
@@ -34,68 +38,29 @@ class GeneticAlgorithm():
             offspring = self._crossover(parents)
 
             # Select only the best individuals for the next generation (μ + λ)
-            fitnessOffspring = self._evaluate(offspring)
-            combinedFitness = population
-            combinedPopulation = fitness
-            newPopulation = ""
+            if len(offspring) > 0:
+                fitnessOffspring = self._evaluation(offspring)
+                combinedFitness = np.concatenate([fitness, fitnessOffspring])
+                combinedPopulation = np.vstack((population, offspring))
+                indexes = np.argsort(combinedFitness)[::-1]
+                newPopulation = combinedPopulation[indexes][:self._popSize]
+            else:
+                newPopulation = population
 
+            # Update historical values
+            bestIndex = np.argmax(fitness)
+            bestSolutions.append(fitness[bestIndex])
+            bestIndividuals.append(self._decode(population[bestIndex]))
+            
             # Mutate the selected individuals to create the new population
             population = self._mutation(newPopulation)
 
-
-            if generation % 10 == 0:
-                pass
-
-        return population
-
-
-
-
-
-        # Initialize population
-        best_solutions = []
-
-        for generation in range(1, num_generations+1):
-            
-            # Evaluation
-            fit_list = self._evaluation(self._getPopulation())
-
-            # Selection
-            selected_individuals = self._selection(fit_list)
-
-            # Crossover
-            children = self._crossover(selected_individuals)
-
-            # Mutation
-            mutated_population = self._mutation(children)
-
-            # Update population
-            self._population = list(mutated_population)
-
-            # print best fitness in the generation
-            min_index = fit_list.index(min(fit_list))
-
-            # Store the best fitness and its corresponding decoded point
-            best_fitness = fit_list[min_index]
-            #print(f"Este es el mejor fitness {best_fitness}, generación {generation}")
-            best_solutions.append(best_fitness)
-
-
             # Stopping Criterion (if the standard deviation of the last 5 generations is less than threshold 5)
             if generation % 10 == 0:
-                if np.std(np.array(best_solutions[generation-10:])) < 0.05:
-                    return best_solutions
+                if np.std(np.array(bestSolutions[generation-10:])) < 0.05:
+                    return bestIndividuals, bestSolutions
 
-        return best_solutions
-
-
-
-
-
-
-
-
-
+        return bestIndividuals, bestSolutions
 
     def _mutation(self, population):
         # Create an empty new population
@@ -117,7 +82,7 @@ class GeneticAlgorithm():
 
     def _selection(self, population, fitness):
         # Combine the individuals and their scores for Binary tournament selection
-        evaluatedIndividuals = np.array(list(zip(population, fitness)))
+        evaluatedIndividuals = list(zip(population, fitness))
 
         parents = np.empty_like(population)
         for i in range(len(population)):
@@ -171,19 +136,25 @@ class GeneticAlgorithm():
 
     def _evaluation(self, population):
         # For each individual in the population, perform clustering and get the fitness
-        fitness = np.empty_like(population)
+        fitness = np.empty(len(population))
         for i, individual in enumerate(population):
             fitness[i] = self._fitnessFunction(individual)
             
         return fitness
+
+    def _decode(self, individual):
+        phenotype = self._encodedGenes[individual == 1]
+        phenotype = np.concatenate([phenotype, self._markerGenes])
+
+        return phenotype
 
     # This is the one you have to modify, Den.
     # As you can see, I've already added the phenotype decoding, now you just have to 
     # do your magic and perform the clustering and get the required metric...
     def _fitnessFunction(self, individual):
 
-        genesToCluster = self._encodedGenes[individual == 1]
-        genesToCluster = np.concatenate([genesToCluster, self._markerGenes])
+        # Decoding the genes from bits to the actual names
+        genesToCluster = self._decode(individual)
 
         # Filter the dataset to keep only the selected genes
         dataset = self._dataset.loc[genesToCluster]
@@ -192,5 +163,5 @@ class GeneticAlgorithm():
         #
         #   CLUSTERING AND METRIC GOES HERE
         #
-        # REMOVE:  Temporary dummy fitness (The one with most 1s is most fit)
+        # REMOVE:  Temporary dummy fitness (The count of 1's in the chromosome)
         return np.sum(individual)

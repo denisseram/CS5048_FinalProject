@@ -25,10 +25,6 @@ def executeProgram(max_gen, popu_size, mutation_points, cross_points, markers, d
     source = os.path.abspath(dataset)
     dataset = pd.read_csv(source, index_col=0)
 
-
-    dataset = dataset.iloc[:10, :]
-
-
     # Execute the Evolutionary algorithm
     GenAlg = GeneticAlgorithm(
         popSize         =   popu_size, 
@@ -37,7 +33,14 @@ def executeProgram(max_gen, popu_size, mutation_points, cross_points, markers, d
         mutateBits      =   mutation_points, 
         crossPoints     =   cross_points
     )
-    solution = GenAlg.run(max_gen)
+    individuals, solutions = GenAlg.run(max_gen)
+
+
+    # CAN BE REMOVED. Just for visualization, the best overall, is the individuals[-1]
+    print("RESULTS")
+    for i in range(len(individuals)):
+        print(f"{individuals[i]}  ---  {solutions[i]}")
+
 
 if __name__ == "__main__":
     executeProgram()
