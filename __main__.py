@@ -4,22 +4,20 @@ import click
 import os
 import pandas as pd
 
-projectPath = os.path.dirname(os.path.abspath(__file__))
-
 @click.command()
 @click.option("-g", "--max-gen", type=int, required=True, help="Specify the maximum number of generations for the program to run.")
 @click.option("-p", "--popu-size", type=int, required=True, help="Specify the population size (number of individuals).")
-@click.option("-m", "--markers", is_flag=True, default=False, help="Do not include marker genes in the individuals (keep them always active).")
+@click.option("-m", "--markers", type=click.Path(exists=True), help="Select the file containing the marker genes in order to include them always.")
 @click.argument("dataset", type=click.Path(exists=True))
 def executeProgram(max_gen, popu_size, markers, dataset):
     # Load the marker genes
-    markerGenes = []
-    with open(os.path.join(projectPath, "SOURCE", "all_markers.txt")) as markerGenesFile:
-        for line in markerGenesFile:
-            cleanLine = line.replace("\n", "")
-            if cleanLine != "":
-                markerGenes.append(cleanLine)
-    marker_genes = markerGenes if markers else []
+    marker_genes = []
+    if markers != None:
+        with open(os.path.abspath(markers)) as markerGenesFile:
+            for line in markerGenesFile:
+                cleanLine = line.replace("\n", "")
+                if cleanLine != "":
+                    marker_genes.append(cleanLine)
     
     # Execute the Evolutionary algorithm
     source = os.path.abspath(dataset)

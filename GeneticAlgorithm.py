@@ -1,90 +1,57 @@
 import numpy as np
-import random
 import math
 import multiprocessing
 
 class GeneticAlgorithm():
 
     def __init__(self, popSize, markerGenes, dataset, Pm = 0.1, Pc = 0.9):
-        self._popSize = popSize
-        self._mutateProb = Pm
-        self._crossProb = Pc
+        # Problem's properties
         self._markerGenes = markerGenes 
-        self._otherGenes = list(markerGenes.index)
-        self._indSize = dataset.shape[0]
+        self._encodedGenes = [gene for gene in list(dataset.index) if gene not in self._markerGenes]
         self._dataset = dataset
 
-    def _createPopulation(self):
-        if self._markerGenes != []:
-            return np.random.randint(0, 2, size=(self._popSize, self._indSize))
-        else:
-            return np.random.randint(0, 2, size=(self._popSize, self._indSize))
+        # GA's Hyper-parameters
+        self._popSize = popSize
+        self._indSize = len(self._encodedGenes)
+        self._mutateProb = Pm
+        self._crossProb = Pc
 
     def run(self, maxGenerations):
-        population = self._createPopulation()
+        # Create the initial population at random
+        population = np.random.randint(0, 2, size=(self._popSize, self._indSize))
 
         for generation in range(1, maxGenerations+1):
 
+            # Evaluate the fitness of the current population
+            fitness = self._evaluation(population)
 
+            # Select the parent pairs that will be used for crossover
+            parents = self._selection(population, fitness)
+
+            # Generate offspring through crossover
+            offspring = self._crossover(parents)
+
+            # Select only the best individuals for the next generation (μ + λ)
+            fitnessOffspring = self._evaluate(offspring)
+            combinedFitness = population
+            combinedPopulation = fitness
+
+
+
+
+            # Mutate the selected individuals to create the new population
             population = self._mutation(population)
+
+
+            if generation % 10 == 0:
+                pass
 
         return population
 
-    def _mutation(self, population, nBits = 1):
-        newPopulation = np.empty_like(population)
-
-        for i, individual in enumerate(population):
-            probability = random.random()
-            if probability < self._mutateProb:
-
-                for _ in range(nBits):
-                    gene = random.randint(len(individual))
-                    individual[gene] = not individual[gene]
-
-            newPopulation[i] = individual
-
-        return newPopulation
-
-    def _selection(self):
-        pass
-
-    def _crossover(self, parent1, parent2, crossPoints = 1):
-        pass
-
-    def _evaluate(self, individual):
-        pass
-
-    # This is the one you have to modify, Den.
-    # As you can see, I've already added the phenotype decoding, now you just have to 
-    # do your magic and perform the clustering and ge the required metric...
-    def _fitnessFunction(self, individual):
-
-        genesToCluster = []
-        
-        if self._markerGenes != None:
-            pass
-
-
-        # Temporary dummy fitness (The one with most 1s is most fit)
-        return np.sum(individual)
 
 
 
 
-"""
-class GeneticAlgorithm(ABC):
-
-    def __init__(self, lowerBound, upperBound, varNum, func, popu_size, Pc=0.9, Pm = None ):
-        self._x_max = upperBound
-        self._x_min = lowerBound
-        self._func = func
-        self._population = []
-        self._vars = varNum 
-        self._popu_size = popu_size
-        self._Pc = Pc           # Probability of crossover
-        self._Pm = None          # Probability of mutation
-
-    def run(self, num_generations):
         # Initialize population
         self.initialize_population()
         self._Pm = 1/len(self._population[0])
@@ -123,95 +90,128 @@ class GeneticAlgorithm(ABC):
 
         return best_solutions
 
+
+
+
+
+
+
+
+
+
+    def _mutation(self, population, nBits = 1):
+        # Create an empty new population
+        newPopulation = np.empty_like(population)
+
+        # Mutate each individual, if the probability is greater than the threshold
+        for i, individual in enumerate(population):
+            probability = np.random.rand()
+            if probability < self._mutateProb:
+
+                # If nBits > 1, selects nBits at random and flips their value (mutates them)
+                for _ in range(nBits):
+                    gene = np.random.randint(len(individual))
+                    individual[gene] = not individual[gene]
+
+            newPopulation[i] = individual
+
+        return newPopulation
+
+    def _selection(self, population, fitness):
+        # Combine the individuals and their scores for Binary tournament selection
+        evaluatedIndividuals = np.array(list(zip(population, fitness)))
+
+        parents = np.empty_like(population)
+        for i in range(len(population)):
+
+            # Shuffle individuals
+            shuffledPop = np.copy(evaluatedIndividuals)
+            np.random.shuffle(shuffledPop)
+
+            # Get two random individuals
+            randChoice1 = np.random.randint(0, len(shuffledPop))
+            randChoice2 = np.random.randint(0, len(shuffledPop))
+
+            candidate1, fitnessCand1 = shuffledPop[randChoice1]
+            candidate2, fitnessCand2 = shuffledPop[randChoice2]
+
+            # Make them compete based on their fitness and select the fittest one
+            parents[i] = candidate1 if fitnessCand1 > fitnessCand2 else candidate2
+
+        return parents
+
+    def _crossover(self, parents, crossPoints = 1):
+        offspring = []
+
+        for i in range(0, len(parents), 2):
+            probability = np.random.rand()
+            if probability < self._mutateProb:
+
+
     def _evaluation(self, population):
-        fit_list = []
-        for i in population:
-            current_value = self._func(i)
-            fit_list.append(current_value)
+        # For each individual in the population, perform clustering and get the fitness
+        fitness = np.empty_like(population)
+        for i, individual in enumerate(population):
+            individualFitness = self._fitnessFunction(individual)
+            fitness[i] = individualFitness
             
-        return fit_list
-    
-#####################################################################
-################## Child class for Binary Encoding ##################
-#####################################################################
+        return fitness
 
-class BinaryGA(GeneticAlgorithm):
+    # This is the one you have to modify, Den.
+    # As you can see, I've already added the phenotype decoding, now you just have to 
+    # do your magic and perform the clustering and get the required metric...
+    def _fitnessFunction(self, individual):
 
-    def __init__(self, lowerBound, upperBound, varNum, func, popu_size, Pc= 0.9, Pm=0.1):
-        super().__init__(lowerBound, upperBound, varNum, func, popu_size, Pc, Pm)
-        self._num_bits = self.number_bits()
-
-    def initialize_population(self):
-        # Initialize each individual in the population
-        num_bits = self.number_bits()
-        for _ in range(self._popu_size):
-            chromosome = ''.join(''.join(str(random.randint(0, 1)) for _ in range(num_bits)) for _ in range(self._vars))
-            self._population.append(chromosome)
-
-    
-    def decoder(self):
-        decode_population = []
-        for individual in self._population:
-            values = []
-            pos = 0
-            # Decode each variable
-            for _ in range(self._vars):
-                genome = individual[pos:pos+self._num_bits]
-                decimal_value = int(genome, 2)
-
-                # Scale the decimal value to its original range
-                real_value = self._x_min + decimal_value * ((self._x_max - self._x_min) / (2**self._num_bits - 1))
-                values.append(round(real_value, 4))
-                pos += self._num_bits
-            decode_population.append(values)
-        return decode_population
-
-
-
-    #Roulette wheel
-    def _selection(self, fit_list): 
-        #Initialize the total fitness (f) and cumulative probability (q) to 0
-        f=0
-        q=0
-
-        # Lists to store cumulative probabilities a probabilities of selection
-        cumu_probability = []
-        probability = []
-
-        #Step 2 calculate the total fitness (f)
-        #revert fitness values
-        for i in fit_list:
-            i_new = max(fit_list) - i + 1e-6
-            f += i_new
+        genesToCluster = np.array(self._encodedGenes)
+        dataset = self.dataset[genesToCluster]
+        print(dataset)
         
-        # Step 3 calculate the probability for each element
-        #In case that f is equal to zero all the individuals will have the same probability
-        for i in fit_list:
-            if f == 0:
-                new_prob = 1/len(fit_list)
-            else:
-                new_prob = (max(fit_list) - i + 1e-6)/f
-            probability.append(new_prob)
-        
-        #Step 4 calculate the cumulative probability
-        for i in probability:
-            q += i  
-            cumu_probability.append(q)
 
-        # step 5 get a pseudo-random number between 0 and 1
+        # Temporary dummy fitness (The one with most 1s is most fit)
+        return np.sum(individual)
 
 
-        selected_individuals =[]
-        for i in range(len(self._population)):
-            r = random.random()
 
-            # Find the first individual whose cumulative probability is greater than or equal to r
-            for k in range(len(self._population)):
-                if r <= cumu_probability[k]:
-                    selected_individuals.append(self._population[k])
-                    break  
-                 
-        return selected_individuals
+
+"""
+    def run(self, num_generations):
+        # Initialize population
+        self.initialize_population()
+        self._Pm = 1/len(self._population[0])
+        best_solutions = []
+
+        for generation in range(1, num_generations+1):
+            
+            # Evaluation
+            fit_list = self._evaluation(self._getPopulation())
+
+            # Selection
+            selected_individuals = self._selection(fit_list)
+
+            # Crossover
+            children = self._crossover(selected_individuals)
+
+            # Mutation
+            mutated_population = self._mutation(children)
+
+            # Update population
+            self._population = list(mutated_population)
+
+            # print best fitness in the generation
+            min_index = fit_list.index(min(fit_list))
+
+            # Store the best fitness and its corresponding decoded point
+            best_fitness = fit_list[min_index]
+            #print(f"Este es el mejor fitness {best_fitness}, generación {generation}")
+            best_solutions.append(best_fitness)
+
+
+            # Stopping Criterion (if the standard deviation of the last 5 generations is less than threshold 5)
+            if generation % 10 == 0:
+                if np.std(np.array(best_solutions[generation-10:])) < 0.05:
+                    return best_solutions
+
+        return best_solutions
 
     def _crossover(self, parents):
 
@@ -255,20 +255,4 @@ class BinaryGA(GeneticAlgorithm):
 
         return parents
 
-      
-    def _mutation(self, population):
-        #Pm = 1/(len(population[0]))
-        for i in range(len(population)):
-            r = random.random()
-            if r < self._Pm:
-                chromosome = population[i]
-                gene_number = random.randint(0, len(chromosome)-1)
-                gene = chromosome[gene_number]
-
-                if gene == '0':
-                    gene = '1'
-                else:
-                    gene = '0'
-                chromosome_mutated = chromosome[:gene_number] + gene + chromosome[(gene_number+1):]
-                population[i] = chromosome_mutated
 """
