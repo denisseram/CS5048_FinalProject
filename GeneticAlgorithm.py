@@ -4,10 +4,10 @@ import multiprocessing
 
 class GeneticAlgorithm():
 
-    def __init__(self, popSize, markerGenes, dataset, Pm = 0.1, Pc = 0.9):
+    def __init__(self, popSize, markerGenes, dataset, mutateBits, crossPoints, Pm = 0.1, Pc = 0.9):
         # Problem's properties
-        self._markerGenes = markerGenes 
-        self._encodedGenes = [gene for gene in list(dataset.index) if gene not in self._markerGenes]
+        self._markerGenes = np.array(markerGenes)
+        self._encodedGenes = np.array([gene for gene in list(dataset.index) if gene not in self._markerGenes])
         self._dataset = dataset
 
         # GA's Hyper-parameters
@@ -15,6 +15,8 @@ class GeneticAlgorithm():
         self._indSize = len(self._encodedGenes)
         self._mutateProb = Pm
         self._crossProb = Pc
+        self._mutateBits = mutateBits
+        self._crossPoints = crossPoints
 
     def run(self, maxGenerations):
         # Create the initial population at random
@@ -35,12 +37,10 @@ class GeneticAlgorithm():
             fitnessOffspring = self._evaluate(offspring)
             combinedFitness = population
             combinedPopulation = fitness
-
-
-
+            newPopulation = ""
 
             # Mutate the selected individuals to create the new population
-            population = self._mutation(population)
+            population = self._mutation(newPopulation)
 
 
             if generation % 10 == 0:
@@ -53,8 +53,6 @@ class GeneticAlgorithm():
 
 
         # Initialize population
-        self.initialize_population()
-        self._Pm = 1/len(self._population[0])
         best_solutions = []
 
         for generation in range(1, num_generations+1):
@@ -99,7 +97,7 @@ class GeneticAlgorithm():
 
 
 
-    def _mutation(self, population, nBits = 1):
+    def _mutation(self, population):
         # Create an empty new population
         newPopulation = np.empty_like(population)
 
@@ -108,9 +106,9 @@ class GeneticAlgorithm():
             probability = np.random.rand()
             if probability < self._mutateProb:
 
-                # If nBits > 1, selects nBits at random and flips their value (mutates them)
-                for _ in range(nBits):
-                    gene = np.random.randint(len(individual))
+                # If n > 1, selects n at random and flips their value (mutates them)
+                for _ in range(self._mutateBits):
+                    gene = np.random.randint(self._indSize)
                     individual[gene] = not individual[gene]
 
             newPopulation[i] = individual
@@ -125,7 +123,7 @@ class GeneticAlgorithm():
         for i in range(len(population)):
 
             # Shuffle individuals
-            shuffledPop = np.copy(evaluatedIndividuals)
+            shuffledPop = evaluatedIndividuals.copy()
             np.random.shuffle(shuffledPop)
 
             # Get two random individuals
@@ -140,20 +138,42 @@ class GeneticAlgorithm():
 
         return parents
 
-    def _crossover(self, parents, crossPoints = 1):
+    def _crossover(self, parents):
         offspring = []
 
+        # Cross individuals pairwise, if the probability is greater than the threshold
         for i in range(0, len(parents), 2):
             probability = np.random.rand()
-            if probability < self._mutateProb:
+            if probability < self._crossProb:
 
+                # Creates an array with n distinct points to perform the crossover
+                crossIndexes = np.random.choice(np.arange(2, self._indSize-2, 3), size=self._crossPoints, replace=False)
+                crossIndexes = np.insert(crossIndexes, 0, 0)
+                crossIndexes = np.append(crossIndexes, self._indSize)
+                crossIndexes = np.sort(crossIndexes)
+
+                # Performs the crossover by alternating the slices exchanged
+                child1 = parents[i].copy()
+                child2 = parents[i + 1].copy()
+
+                for j in range(len(crossIndexes) - 1):
+                    # Only exchange odd segments (alternate)
+                    if j % 2 != 0:
+                        start = crossIndexes[j]
+                        end = crossIndexes[j + 1]
+
+                        child1[start:end] = parents[i + 1][start:end]
+                        child2[start:end] = parents[i][start:end]
+
+                offspring.extend([child1, child2])
+
+        return np.array(offspring)
 
     def _evaluation(self, population):
         # For each individual in the population, perform clustering and get the fitness
         fitness = np.empty_like(population)
         for i, individual in enumerate(population):
-            individualFitness = self._fitnessFunction(individual)
-            fitness[i] = individualFitness
+            fitness[i] = self._fitnessFunction(individual)
             
         return fitness
 
@@ -162,97 +182,15 @@ class GeneticAlgorithm():
     # do your magic and perform the clustering and get the required metric...
     def _fitnessFunction(self, individual):
 
-        genesToCluster = np.array(self._encodedGenes)
-        dataset = self.dataset[genesToCluster]
-        print(dataset)
+        genesToCluster = self._encodedGenes[individual == 1]
+        genesToCluster = np.concatenate([genesToCluster, self._markerGenes])
+
+        # Filter the dataset to keep only the selected genes
+        dataset = self._dataset.loc[genesToCluster]
         
-
-        # Temporary dummy fitness (The one with most 1s is most fit)
+        # #####################################################################
+        #
+        #   CLUSTERING AND METRIC GOES HERE
+        #
+        # REMOVE:  Temporary dummy fitness (The one with most 1s is most fit)
         return np.sum(individual)
-
-
-
-
-"""
-    def run(self, num_generations):
-        # Initialize population
-        self.initialize_population()
-        self._Pm = 1/len(self._population[0])
-        best_solutions = []
-
-        for generation in range(1, num_generations+1):
-            
-            # Evaluation
-            fit_list = self._evaluation(self._getPopulation())
-
-            # Selection
-            selected_individuals = self._selection(fit_list)
-
-            # Crossover
-            children = self._crossover(selected_individuals)
-
-            # Mutation
-            mutated_population = self._mutation(children)
-
-            # Update population
-            self._population = list(mutated_population)
-
-            # print best fitness in the generation
-            min_index = fit_list.index(min(fit_list))
-
-            # Store the best fitness and its corresponding decoded point
-            best_fitness = fit_list[min_index]
-            #print(f"Este es el mejor fitness {best_fitness}, generación {generation}")
-            best_solutions.append(best_fitness)
-
-
-            # Stopping Criterion (if the standard deviation of the last 5 generations is less than threshold 5)
-            if generation % 10 == 0:
-                if np.std(np.array(best_solutions[generation-10:])) < 0.05:
-                    return best_solutions
-
-        return best_solutions
-
-    def _crossover(self, parents):
-
-        #empty lists for selected individual to crossover and childrens
-        individuals_cross = []
-        index_cross = []
-        children =[]
-
-        #select individuals random to perform the crossover
-        for i in range(0, len(parents), 2):
-            r = random.random()
-            if r < self._Pc:
-                individuals_cross.append(parents[i])
-                individuals_cross.append(parents[i+1])
-                index_cross.append(i)
-                index_cross.append(i+1)
-
-
-        # Make the crossover
-        if len(individuals_cross) > 1:
-            for i in range(0, len(individuals_cross)-1,2):
-                parent1 = parents[i]
-                parent2 = parents[i+1]
-
-                # select the position for crossover
-                position_cross = random.randint(1, len(parents[0])-1)
-
-                #perform single point crossover
-                chromosome1 = parent1[:position_cross] + parent2[position_cross:]
-                chromosome2 = parent2[:position_cross] + parent1[position_cross:]  
-            
-                children.append(chromosome1)
-                children.append(chromosome2)
-
-            cont = 0
-            
-            for i in range(len(children)):
-                parents[index_cross[i]]=children[cont]
-                cont +=1
-
-
-        return parents
-
-"""
