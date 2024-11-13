@@ -4,7 +4,7 @@ import multiprocessing
 
 class GeneticAlgorithm():
 
-    def __init__(self, popSize, markerGenes, dataset, mutateBits, crossPoints, Pm = 0.1, Pc = 0.9):
+    def __init__(self, popSize, markerGenes, dataset, mutateBits, crossPoints, Pm, Pc):
         # Problem's properties
         self._markerGenes = np.array(markerGenes)
         self._encodedGenes = np.array([gene for gene in list(dataset.index) if gene not in self._markerGenes])
