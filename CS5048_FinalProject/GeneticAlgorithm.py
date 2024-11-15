@@ -173,15 +173,15 @@ class GeneticAlgorithm():
         
         # Step 1: Determine the optimal number of clusters using Silhouette score
         silhouette_scores = []
-        max_clusters = 10  # Define a reasonable upper bound for clusters
+        max_clusters = 10  
         for n_clusters in range(2, max_clusters + 1):
             kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-            cluster_labels = kmeans.fit_predict(dataset.T)  # Cluster on rows
+            cluster_labels = kmeans.fit_predict(dataset.T)  
             silhouette_avg = silhouette_score(dataset.T, cluster_labels)
             silhouette_scores.append(silhouette_avg)
         
         # Select the number of clusters with the highest Silhouette score
-        best_n_clusters = np.argmax(silhouette_scores) + 2  # +2 because range starts at 2
+        best_n_clusters = np.argmax(silhouette_scores) + 2  
         
         # Step 2: Perform clustering using the optimal number of clusters
         kmeans = KMeans(n_clusters=best_n_clusters, random_state=42)
