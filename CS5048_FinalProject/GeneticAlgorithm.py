@@ -165,23 +165,19 @@ class GeneticAlgorithm():
     
         # Filter the dataset to keep only the selected genes
         dataset = self._dataset.loc[genesToCluster, :]
-
-        print(dataset)
         
         # Load the true labels from the CSV file
-        labels_df = pd.read_csv('CS5048_FinalProject/SOURCE/normalized_muraro_labels.csv')
-        true_labels = labels_df['CellType']
-
-        print(true_labels)
+        labels_df = pd.read_csv('CS5048_FinalProject/SOURCE/cell_types.csv')
+        true_labels = labels_df.iloc[:, 0].tolist()
         
-        """
+        
         # Step 1: Determine the optimal number of clusters using Silhouette score
         silhouette_scores = []
         max_clusters = 10  # Define a reasonable upper bound for clusters
         for n_clusters in range(2, max_clusters + 1):
             kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-            cluster_labels = kmeans.fit_predict(dataset)  # Cluster on rows
-            silhouette_avg = silhouette_score(dataset, cluster_labels)
+            cluster_labels = kmeans.fit_predict(dataset.T)  # Cluster on rows
+            silhouette_avg = silhouette_score(dataset.T, cluster_labels)
             silhouette_scores.append(silhouette_avg)
         
         # Select the number of clusters with the highest Silhouette score
@@ -189,12 +185,14 @@ class GeneticAlgorithm():
         
         # Step 2: Perform clustering using the optimal number of clusters
         kmeans = KMeans(n_clusters=best_n_clusters, random_state=42)
-        predicted_labels = kmeans.fit_predict(dataset)
-        
+        predicted_labels = kmeans.fit_predict(dataset.T)
+        print(len(predicted_labels))
+        print(len(true_labels))
+
         # Step 3: Calculate NMI between the predicted labels and true labels
         nmi_score = normalized_mutual_info_score(true_labels, predicted_labels)
         
         # Return NMI score as the fitness
-        """
-        nmi_score = 1
+        
+        #nmi_score = 1
         return nmi_score
