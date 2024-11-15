@@ -11,11 +11,15 @@ import pandas as pd
 @click.option("-Mp", "--mutation-points", type=int, default=1, help="Specify the number of bits fliped per individual during mutation.   [DEFAULT = 1]")
 @click.option("-Cp", "--cross-points", type=int, default=1, help="Specify the number of crossover points for the parents.   [DEFAULT = 1]")
 @click.option("-m", "--markers", type=click.Path(exists=True), help="Select the file containing the marker genes in order to include them always.")
+@click.option("-l", "--labels", type=click.Path(exists=True), help="Select the file containing the true labels.")
+
 @click.argument("dataset", type=click.Path(exists=True))
-def executeProgram(max_gen, popu_size, crossover_rate, mutation_rate, mutation_points, cross_points, markers, dataset):
+def executeProgram(max_gen, popu_size, crossover_rate, mutation_rate, mutation_points, cross_points, markers, labels, dataset):
     # Load the dataset
     source = os.path.abspath(dataset)
     dataset = pd.read_csv(source, index_col=0)
+    labels_source = os.path.abspath(labels)
+    labels_df = pd.read_csv(labels_source)
 
     # Load the marker genes
     marker_genes = []
@@ -37,7 +41,8 @@ def executeProgram(max_gen, popu_size, crossover_rate, mutation_rate, mutation_p
         mutateBits      =   mutation_points, 
         crossPoints     =   cross_points,
         Pm              =   mutation_rate,
-        Pc              =   crossover_rate
+        Pc              =   crossover_rate,
+        labels_df       =   labels_df
     )
     individuals, solutions = GenAlg.run(max_gen)
 

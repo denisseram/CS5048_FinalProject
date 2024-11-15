@@ -9,11 +9,12 @@ import numpy as np
 
 class GeneticAlgorithm():
 
-    def __init__(self, popSize, markerGenes, dataset, mutateBits, crossPoints, Pm, Pc):
+    def __init__(self, popSize, markerGenes, dataset, mutateBits, crossPoints, Pm, Pc, labels_df):
         # Problem's properties
         self._markerGenes = np.array(markerGenes)
         self._encodedGenes = np.array([gene for gene in list(dataset.index) if gene not in self._markerGenes])
         self._dataset = dataset
+        self._labels_df = labels_df
 
         # GA's Hyper-parameters
         self._popSize = popSize
@@ -161,14 +162,13 @@ class GeneticAlgorithm():
         # Decoding the genes from bits to the actual names
         genesToCluster = self._decode(individual)
 
-
     
         # Filter the dataset to keep only the selected genes
         dataset = self._dataset.loc[genesToCluster, :]
         
         # Load the true labels from the CSV file
-        labels_df = pd.read_csv('CS5048_FinalProject/SOURCE/cell_types.csv')
-        true_labels = labels_df.iloc[:, 0].tolist()
+        
+        true_labels = self._labels_df.iloc[:, 0].tolist()
         
         
         # Step 1: Determine the optimal number of clusters using Silhouette score
