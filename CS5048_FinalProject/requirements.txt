@@ -3,3 +3,4 @@ click
 leidenalg 
 igraph 
 scikit-learn
+pandas
