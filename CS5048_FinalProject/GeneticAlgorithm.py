@@ -1,6 +1,8 @@
 import numpy as np
 import math
 import multiprocessing
+import subprocess
+
 
 import pandas as pd
 from sklearn.cluster import KMeans
@@ -169,30 +171,26 @@ class GeneticAlgorithm():
         # Load the true labels from the CSV file
         
         true_labels = self._labels_df.iloc[:, 0].tolist()
-        
-        
-        # Step 1: Determine the optimal number of clusters using Silhouette score
-        silhouette_scores = []
-        max_clusters = 10  
-        for n_clusters in range(2, max_clusters + 1):
-            kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-            cluster_labels = kmeans.fit_predict(dataset.T)  
-            silhouette_avg = silhouette_score(dataset.T, cluster_labels)
-            silhouette_scores.append(silhouette_avg)
-        
-        # Select the number of clusters with the highest Silhouette score
-        best_n_clusters = np.argmax(silhouette_scores) + 2  
-        
-        # Step 2: Perform clustering using the optimal number of clusters
-        kmeans = KMeans(n_clusters=best_n_clusters, random_state=42)
-        predicted_labels = kmeans.fit_predict(dataset.T)
-        print(len(predicted_labels))
-        print(len(true_labels))
+        with open('all_markers.txt', 'w') as f:
+            f.write('\n'.join(genesToCluster))
 
-        # Step 3: Calculate NMI between the predicted labels and true labels
-        nmi_score = normalized_mutual_info_score(true_labels, predicted_labels)
-        
-        # Return NMI score as the fitness
+        # Execute the R script
+        try:
+            result = subprocess.run(
+                ["Rscript", "Seurat.R"],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            # Assuming the R script outputs the fitness score directly
+            nmi_score = float(result.stdout.strip())
+        except subprocess.CalledProcessError as e:
+            print(f"Error running R script: {e.stderr}")
+            nmi_score = 0  # Assign a default value or handle the error appropriately
+
+
+
+    
         
         #nmi_score = 1
         return nmi_score
