@@ -4,3 +4,7 @@ leidenalg
 igraph 
 scikit-learn
 pandas
+subprocess
+math
+matplotlib
+os
