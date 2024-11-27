@@ -50,6 +50,9 @@ seurat_clustering <- function(filename_dataset){
   
   # Identify highly variable features
   all.genes <- rownames(seu)  # Use all genes for scaling
+
+  
+  print(dim(counts(sce)))
   seu <- ScaleData(seu, features = all.genes)
   
   # Perform PCA for dimensionality reduction
@@ -91,7 +94,7 @@ seurat_clustering <- function(filename_dataset){
   colnames(final) <- c("cell", "seurat")
   write.csv(final, file = paste0(folder, "/seurat.csv"), sep = ",", quote = FALSE, row.names = TRUE, col.names = TRUE)
   
- 
+ return(dim(counts(sce)))
 }
 
 # Function to calculate Normalized Mutual Information (NMI)
@@ -121,12 +124,13 @@ calc_ARI <- function(M, N) {
 
 # workflow execution
 filter_markerGenes("muraro") # Filter marker genes for the "muraro" dataset
-seurat_clustering("muraro_markergenes") # Perform Seurat clustering on filtered data
-
+min <- seurat_clustering("muraro_markergenes") # Perform Seurat clustering on filtered data
+print("DIMENSIONES")
+print(min)
 # Load results and calculate NMI
 dataset <- "muraro_markergenes"
 sce <- readRDS(paste0("./CS5048_FinalProject/SOURCE/", dataset, ".RDS"))
-resultados <- read.csv(paste0("./results/", dataset, "/seurat/seurat.csv"))
+resultados <- read.csv(paste0("./CS5048_FinalProject/results/", dataset, "/seurat/seurat.csv"))
 
 # Retrieve cell type annotations and cluster assignments
 cell_annotations <- colData(sce)
@@ -134,11 +138,14 @@ cell_type_annotations <- cell_annotations$cellType
 cluster_assignation <- resultados[["seurat"]]
 
 # Calculate NMI score
-nmi <- calc_ARI(cell_type_annotations, cluster_assignation)
+nmi <- calc_NMI(cell_type_annotations, cluster_assignation)
 
 # Determine the number of unique clusters
 cluster_assignation1 <- as.data.frame(cluster_assignation)
 num_clu <- length(unique(cluster_assignation1$cluster_assignation))
+
+print(nmi)
+print(num_clu)
 
 # Output NMI score
 score <- as.numeric(nmi)

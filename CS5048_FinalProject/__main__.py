@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 @click.option("-g", "--max-gen", type=int, required=True, help="Specify the maximum number of generations for the program to run.")
 @click.option("-p", "--popu-size", type=int, required=True, help="Specify the population size (number of individuals).")
 @click.option("-Pc", "--crossover-rate", type=float, default=0.8, help="Specify the probability of a pair of individuals to create offspring.   [DEFAULT = 0.8]")
-@click.option("-Pm", "--mutation-rate", type=float, default=0.6, help="Specify the probability of an individual to suffer mutation.   [DEFAULT = 0.1]")
+@click.option("-Pm", "--mutation-rate", type=float, default=0.1, help="Specify the probability of an individual to suffer mutation.   [DEFAULT = 0.1]")
 @click.option("-Mp", "--mutation-points", type=int, default=1, help="Specify the number of bits fliped per individual during mutation.   [DEFAULT = 1]")
 @click.option("-Cp", "--cross-points", type=int, default=1, help="Specify the number of crossover points for the parents.   [DEFAULT = 1]")
 @click.option("-m", "--markers", type=click.Path(exists=True), help="Select the file containing the marker genes in order to include them always.")

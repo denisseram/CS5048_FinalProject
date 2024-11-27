@@ -178,7 +178,7 @@ class GeneticAlgorithm():
         with open('filter_genes.txt', 'w') as f:
             f.write('\n'.join(genesToCluster))
 
-        
+        """
         # Step 1: Determine the optimal number of clusters using Silhouette score
         silhouette_scores = []
         max_clusters = 10  
@@ -215,7 +215,7 @@ class GeneticAlgorithm():
         except subprocess.CalledProcessError as e:
             print(f"Error running R script: {e.stderr}")
             nmi_score = 0  # Assign a default value or handle the error appropriately
-        """
+        
         
 
 
