@@ -34,7 +34,7 @@ seurat_clustering <- function(filename_dataset){
   }
   
   # Load the filtered dataset
-  sce <- readRDS(paste0("./CS5048_FinalProject/SOURCE/", filename_dataset, ".RDS"))
+  sce <- readRDS(paste0("./CS5048_FinalProject/SOURCE/", filename_dataset, ".rds"))
 
   # Create a Seurat object from the SCE object
   seu <- CreateSeuratObject(

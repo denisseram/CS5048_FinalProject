@@ -67,7 +67,7 @@ def executeProgram(max_gen, popu_size, crossover_rate, mutation_rate, mutation_p
         # Optional: Print results to console
         print("RESULTS")
         print(results_df)
-
+        """
         # Convergence plot
         plt.figure(figsize=(10, 6))
         plt.plot(range(1, max_gen + 1), results_df["Solution Score"], marker="o", linestyle="-", color="b")
@@ -79,6 +79,7 @@ def executeProgram(max_gen, popu_size, crossover_rate, mutation_rate, mutation_p
         plt.savefig(f"convergence_plot_run_{run}.png")
         print(f"Convergence plot saved as 'convergence_plot_run_{run}.png'")
         plt.show()
+        """
     
 if __name__ == "__main__":
     executeProgram()
