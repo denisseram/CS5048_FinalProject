@@ -1,7 +1,8 @@
 # CS5048_FinalProject
 
 Emilio Rios Ochoa a01378248
-Denisse Chacón Ramírez A01562077
+
+Denisse Chacón Ramírez a01562077
 
 
 # Genetic Algorithm for Optimization
