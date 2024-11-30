@@ -1,5 +1,9 @@
 # CS5048_FinalProject
 
+Emilio Rios Ochoa a01378248
+Denisse Chacón Ramírez A01562077
+
+
 # Genetic Algorithm for Optimization
 
 This repository contains a Python implementation of a genetic algorithm for optimization gene selection for clustering in scRNA-seq data. The algorithm evolves solutions through generations and outputs the results to a CSV file, along with an optional convergence plot.
