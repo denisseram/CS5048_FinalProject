@@ -54,7 +54,7 @@ def executeProgram(max_gen, popu_size, crossover_rate, mutation_rate, mutation_p
         results = []
         for individual, solution in zip(individuals, solutions):
             results.append({
-                "Individual": individual,  # Assuming individual is iterable
+                "Individual":  ", ".join(str(gene) for gene in individual), ,  
                 "Solution Score": solution,
                 "Length": len(individual)
             })

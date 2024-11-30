@@ -8,13 +8,15 @@ read_data <- function(file) {
   df
 }
 
-all_data <-read_data("/Users/cdr_c/Desktop/data-shell/genetic_algorithm_results_run_1.csv")
+all_data <-read_data("/Users/cdr_c/Seurat_solito_genes/genetic_algorithm_results_run_1.csv")
 all_data <- bind_rows(all_data, .id = "Run")
 
 all_data$Score <- as.numeric(all_data$Score)
 all_data$Length <- as.numeric(all_data$Length)
 
-genes_list <- strsplit(as.character(all_data$Genes), " ")
+genes_generacion_5 <- all_data$Genes[all_data$Generation == 5]
+
+genes_list <- strsplit(as.character(genes_generacion_5), " ")
 
 genes_data <- data.frame(Gene = unlist(genes_list), Run = rep(all_data$Run, sapply(genes_list, length)))
 
@@ -140,8 +142,8 @@ seurat_clustering <- function(filename_dataset){
   
   output_path <- file.path(folder, "VlnPlot.png")
   
-  vln_plot <- VlnPlot(seu, features = c("A2ML1", "AAMP"))
-  VlnPlot(seu, features = c("A2ML1", "AAMP"))
+  vln_plot <- VlnPlot(seu, features = c("RNH1", "PGA5", "MALAT1", "NDN", "MAP3K4", "DHX8"))
+  VlnPlot(seu, features = c("RNH1", "PGA5", "MALAT1", "NDN", "MAP3K4", "DHX8"))
   
   
   ggsave(
